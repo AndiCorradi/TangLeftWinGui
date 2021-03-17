@@ -36,13 +36,8 @@ int DayOfMonth = CalcCurrentDaysOfMonth();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	FillPayDayBox(AmmountDaysOfCurrentMonth, DayOfMonth);
+	//FillPayDayBox(AmmountDaysOfCurrentMonth, DayOfMonth);
 
-	int CurSelPayday = GetPayDayCurSel();
-	char buff[1024];
-	sprintf_s(buff, "%d", CurSelPayday);
-	MessageBox(0, buff, "Error", MB_OK);
-	
 	HWND hWnd; // Name fürs Window Handle
 	HWND hButton;
 	WNDCLASS wc; // Struct/Klasse für die Fenster definieren
@@ -75,6 +70,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Combobox PayDay erstellen:
 	hPayDayBox = CreateWindowEx(WS_EX_CLIENTEDGE, "combobox", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL | CBS_DROPDOWNLIST, 10, 250, 200, 200, hWnd, (HMENU)ID_PAYDAYBOX, 0, 0);
 	FillPayDayBox(AmmountDaysOfCurrentMonth, DayOfMonth);
+
+	// Debug MessageBox to show a Value
+	int CurSelPayday = GetPayDayCurSel();
+	char buff[1024];
+	sprintf_s(buff, "%d", CurSelPayday);
+	MessageBox(0, buff, "Error", MB_OK);
 
 	//Fenster aufrufen:
 	ShowWindow(hWnd, nCmdShow);
@@ -176,16 +177,12 @@ int FillPayDayBox(int AmmountDaysOfCurrentMonth, int DayOfMonth)  // Populates t
 
 	SendMessage(hPayDayBox, CB_SETCURSEL, (WPARAM) 23, 0);
 	SendMessage(hPayDayBox, CB_DELETESTRING, (WPARAM)DayOfMonth-1, 0);
-	//int CurSelPayDay = 5;
-	//CurSelPayDay = SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
-	//SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
 
-	//return CurSelPayDay;
 	return 0;
 }
 
 int GetPayDayCurSel()
 {
-	SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
-	return CB_GETCURSEL;
+	int CurSel = SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
+	return CurSel;
 }
