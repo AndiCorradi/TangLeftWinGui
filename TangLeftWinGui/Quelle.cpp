@@ -2,8 +2,9 @@
 #include <cassert>
 #include <time.h>
 #include <stdio.h>
-//#include <string>
-//#include <iostream>
+#include <string>
+#include <iostream>
+#include <sstream>
 //#include <conio.h>
 //#include <iomanip>
 //#include <limits>
@@ -183,6 +184,19 @@ int FillPayDayBox(int AmmountDaysOfCurrentMonth, int DayOfMonth)  // Populates t
 
 int GetPayDayCurSel()
 {
-	int CurSel = SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
-	return CurSel;
+	int nIndex = SendMessage(hPayDayBox, CB_GETCURSEL, 0, 0);
+	char CharCurSel[1024];
+	SendMessage(hPayDayBox, CB_GETLBTEXT, nIndex, (LPARAM)CharCurSel);
+	string Cursel = CharCurSel;
+	int PayDayCursel;
+	stringstream(Cursel) >> PayDayCursel;
+	
+
+	int b = 0;
+
+
+	// NEXT STEP: Convert string Cursel
+
+	//return Cursel;
+	return PayDayCursel;
 }
