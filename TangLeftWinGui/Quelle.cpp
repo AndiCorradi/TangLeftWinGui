@@ -1,8 +1,9 @@
-// this console programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.1
+// this programm calculates the daily budget left until next payday based on your balance and payday input.
+// Version: 1.2
 // author: andi@corradi.ch release Date: 19.March 2021
 
 #include <windows.h>
+#include <WinUser.h>
 #include <cassert>
 #include <time.h>
 #include <stdio.h>
@@ -11,10 +12,11 @@
 #include <sstream>
 
 // TODO:
+// - save Window Position and remember on next start
 // - create an animated Splash Screen
-// - set Mainwindow size to non resizable
+// DONE set Mainwindow size to non resizable
 // - Write Payday Selection to preference file and read every start
-// - ErrorHandling: prevent calculate on empty Balance
+// DONE - Error Handling: prevent calculate on empty Balance
 // - Set Window Icon
 // - Create MSI with Logos on Shortcuts
 
@@ -55,7 +57,6 @@ LPCSTR Nine = "9";
 HBITMAP hLogoImage, hTitleImage;
 HWND hLogo;
 HWND hTitle;
-
 
 // declare function prototypes
 
@@ -113,7 +114,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	assert(RegisterClass(&wc)); // Pointer auf die Window Klasse
 
 	//Fenster erstellen:
-	hWnd = CreateWindow("WINAPITest", "TangLeft 1.0", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 490, 400, 0, 0, hInstance, 0);
+	hWnd = CreateWindow("WINAPITest", "TangLeft 1.2", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 490, 400, 0, 0, hInstance, 0);
+	//GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT * lpwndpl);
 	// Button erstellen:
 	hButton = CreateWindow("button", "calculate", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 270, 187, 195, 25, hWnd, (HMENU) IDC_CALCULATE_BUTTON, hInstance, 0);
 	// Balance Engabefeld erstellen:
@@ -159,7 +161,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int CurSelPayday = GetPayDayCurSel();
 	char buff[1024];
 	sprintf_s(buff, "%d", CurSelPayday);
-	MessageBox(0, buff, "Error", MB_OK);
+	MessageBox(0, buff, "DebugBox", MB_OK);
 
 	//Fenster aufrufen:
 	ShowWindow(hWnd, nCmdShow);
@@ -186,11 +188,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdcStatic = (HDC)wParam; //Set Variable for static control Background Color
-
 	switch (uMsg)
 	{
 	case WM_CLOSE:
 	case WM_DESTROY:
+		typedef struct tagWINDOWPLACEMENT //define struct for save and restore window position
+		{
+			UINT  length;
+			UINT  flags;
+			UINT  showCmd;
+			POINT ptMinPosition;
+			POINT ptMaxPosition;
+			RECT  rcNormalPosition;
+			RECT  rcDevice;
+		}
+		WINDOWPLACEMENT;
+
+		BOOL GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
@@ -201,20 +215,27 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			int DaysToPayday(0);
 			int DailyBudget(0);
 
-			DaysToPayday = CalcDaysToPayday(CurSelPayday);
-			DailyBudget = CalculateDailyBudget(BalanceInt, DaysToPayday);
+			if (BalanceInt == 0)
+			{
+				SetWindowText(hBalance, TEXT(""));
+			}
+			else
+			{
+				DaysToPayday = CalcDaysToPayday(CurSelPayday);
+				DailyBudget = CalculateDailyBudget(BalanceInt, DaysToPayday);
 
-			//convert int to string
-			stringstream DailyBudgetStr;
-			DailyBudgetStr << DailyBudget;
-			string DailyBudgetString = DailyBudgetStr.str();
-	
-			//convert string to LPCSTR
-			LPCSTR DailyBudgetLP = DailyBudgetString.c_str();
-			
-			//GetWindowText(hBalance, Balance, 1024);
-			SetWindowText(hResult, TEXT(DailyBudgetLP));
-			
+				//convert int to string
+				stringstream DailyBudgetStr;
+				DailyBudgetStr << DailyBudget;
+				string DailyBudgetString = DailyBudgetStr.str();
+
+				//convert string to LPCSTR
+				LPCSTR DailyBudgetLP = DailyBudgetString.c_str();
+
+				//GetWindowText(hBalance, Balance, 1024);
+				SetWindowText(hResult, TEXT(DailyBudgetLP));
+			}
+
 			//Debug Message Box PayDay
 			//int CurSelPayday = GetPayDayCurSel();
 			//char buff[1024];
@@ -291,6 +312,7 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		if (LOWORD(wParam) == IDC_BALANCE_BUTTON_C)
 		{
 			SetWindowText(hBalance, TEXT(""));
+			SetWindowText(hResult, TEXT(""));
 		}
 
 	// Set static control Background Color
@@ -404,7 +426,7 @@ int GetBalance()
 	char Balance[1024];
 	GetWindowText(hBalance, Balance, 1024);
 	string SBalance = Balance;
-	int BalanceInt;
+	int BalanceInt(0);
 	stringstream(SBalance) >> BalanceInt;
 
 	return BalanceInt;
