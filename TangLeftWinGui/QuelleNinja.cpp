@@ -185,25 +185,40 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 }
 
+
+
 LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int CurSelPayday = GetPayDayCurSel();
-	int BalanceInt = GetBalance();
-	int DaysToPayday(0);
-	int DailyBudget(0);
+	int CurSelPayday;
+	int BalanceInt;
+	int DaysToPayday = 0;
+	int DailyBudget = 0;
+	WINDOWPLACEMENT wndpl = { 0 };
+	HKEY hkhandle;
+	int xpos = 0;
 
 	HDC hdcStatic = (HDC)wParam; //Set Variable for static control Background Color
 	switch (uMsg)
 	{
 	case WM_CLOSE:
 	case WM_DESTROY:
+		wndpl.length = sizeof(wndpl);
 
-		BOOL GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+		GetWindowPlacement(hWnd, &wndpl);
+		if (RegCreateKeyA(HKEY_CURRENT_USER, "SOFTWARE\\TANGLEFT", &hkhandle) == ERROR_SUCCESS)
+		{
+			RegSetValueExA(hkhandle, "xpos", 0, REG_DWORD,  (const BYTE *)&xpos, sizeof(xpos));
+			RegCloseKey(hkhandle);
+		}
+		// else Fehlermeldung
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_CALCULATE_BUTTON)
 		{
+			CurSelPayday = GetPayDayCurSel();
+			BalanceInt = GetBalance();
+
 			if (BalanceInt == 0)
 			{
 				SetWindowText(hBalance, TEXT(""));
