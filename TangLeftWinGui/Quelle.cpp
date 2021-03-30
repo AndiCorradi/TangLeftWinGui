@@ -1,6 +1,6 @@
 // this programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.2
-// author: andi@corradi.ch release Date: 19.March 2021
+// Version: 1.3
+// author: andi@corradi.ch release Date: 30.March 2021
 
 #include <windows.h>
 #include <WinUser.h>
@@ -12,12 +12,12 @@
 #include <sstream>
 
 // TODO:
-// - save Window Position and remember on next start
+// DONE save Window Position and remember on next start
 // - create an animated Splash Screen
 // DONE set Mainwindow size to non resizable
 // - Write Payday Selection to preference file and read every start
 // DONE - Error Handling: prevent calculate on empty Balance
-// - Set Window Icon
+// - Set Window and Taskbar Icon
 // - Create MSI with Logos on Shortcuts
 
 using namespace std;
@@ -69,6 +69,8 @@ int GetBalance();
 void loadImages();
 int CalcDaysToPayday(int);
 int CalculateDailyBudget(int, int);
+void SaveWindowPos(HWND);
+void SetWindowPosition(HWND);
 
 // declare Variable
 
@@ -115,7 +117,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//Fenster erstellen:
 	hWnd = CreateWindow("WINAPITest", "TangLeft 1.2", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 490, 400, 0, 0, hInstance, 0);
-	//GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT * lpwndpl);
+	// Fenster Position wiederherstellen (auf Position beim letzten Programm schliessen)
+	SetWindowPosition(hWnd);
 	// Button erstellen:
 	hButton = CreateWindow("button", "calculate", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 270, 187, 195, 25, hWnd, (HMENU) IDC_CALCULATE_BUTTON, hInstance, 0);
 	// Balance Engabefeld erstellen:
@@ -197,8 +200,7 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 	case WM_CLOSE:
 	case WM_DESTROY:
-
-		BOOL GetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+		SaveWindowPos(hWnd);
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
@@ -425,4 +427,39 @@ void loadImages()
 {
 	hLogoImage = (HBITMAP)LoadImageW(NULL, L"LogoTangLeft.bmp", IMAGE_BITMAP, 222, 150, LR_LOADFROMFILE);
 	hTitleImage = (HBITMAP)LoadImageW(NULL, L"TangLeftTitle.bmp", IMAGE_BITMAP, 215, 47, LR_LOADFROMFILE);
+}
+
+void SaveWindowPos(HWND hWnd)
+{
+	WINDOWPLACEMENT lpwndpl;
+	HKEY hkhandle;
+
+	lpwndpl.length = sizeof(lpwndpl);
+	GetWindowPlacement(hWnd, &lpwndpl);
+	RegCreateKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", &hkhandle);
+	RegSetValueExA(hkhandle, "LeftPos", 0, REG_DWORD, (const BYTE*)&lpwndpl.rcNormalPosition.left, sizeof(lpwndpl.rcNormalPosition.left));
+	RegSetValueExA(hkhandle, "TopPos", 0, REG_DWORD, (const BYTE*)&lpwndpl.rcNormalPosition.top, sizeof(lpwndpl.rcNormalPosition.top));
+	RegCloseKey(hkhandle);
+}
+
+void SetWindowPosition(HWND hWnd)
+{
+	HKEY hkhandle;
+	DWORD DataSize;
+	WINDOWPLACEMENT lpwndpl;
+	lpwndpl.length = sizeof(lpwndpl);
+
+	RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", 0, KEY_QUERY_VALUE, &hkhandle);
+	RegGetValueA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", "LeftPos", RRF_RT_ANY, 0, &lpwndpl.rcNormalPosition.left, &DataSize);
+	RegGetValueA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", "TopPos", RRF_RT_ANY, 0, &lpwndpl.rcNormalPosition.top, &DataSize);
+	RegCloseKey(hkhandle);
+
+	if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", 0, KEY_QUERY_VALUE, &hkhandle) == ERROR_SUCCESS)
+	{
+		SetWindowPos(hWnd, HWND_TOP, lpwndpl.rcNormalPosition.left, lpwndpl.rcNormalPosition.top, 490, 400, 0);
+	}
+	else
+	{
+		SetWindowPos(hWnd, HWND_TOP, 100, 100, 490, 400, 0);
+	}
 }
