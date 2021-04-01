@@ -1,5 +1,5 @@
 // this programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.4
+// Version: 1.5
 // author: andi@corradi.ch release Date: 01.April 2021
 
 #include <windows.h>
@@ -17,6 +17,7 @@
 
 // TODO:
 // DONE save Window Position and remember on next start
+// DONE Write Balance to a File and read on every start
 // - create an animated Splash Screen
 // DONE set Mainwindow size to non resizable
 // DONE Write Payday Selection to preference file and read every start
@@ -76,6 +77,8 @@ int CalculateDailyBudget(int, int);
 void SaveWindowPos(HWND);
 void SetWindowPosition(HWND);
 void SavePayDaySel();
+void SaveBalance(int);
+void FillBalance();
 
 // declare Variable
 
@@ -129,6 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Balance Engabefeld erstellen:
 	hBalance = CreateWindow("edit", "", WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NUMBER, 10, 90, 215, 20, hWnd, 0, 0, 0); //ES_NUMBER: allows only digits to enter.
 	hBalanceLabel = CreateWindow("static", "Balance:", WS_CHILD | WS_VISIBLE, 10, 70, 200, 20, hWnd, 0, 0, 0);
+	FillBalance();
 	// Ausgabe Textfeld erstellen:
 	hResult = CreateWindow("edit", 0, WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER, 10, 250, 455, 100, hWnd, 0, 0, 0);
 	hResultLabel = CreateWindow("static", "daily budget unti next payday:", WS_CHILD | WS_VISIBLE, 10, 225, 250, 20, hWnd, 0, 0, 0);
@@ -207,6 +211,7 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	case WM_DESTROY:
 		SaveWindowPos(hWnd);
 		SavePayDaySel();
+		SaveBalance(BalanceInt);
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
@@ -503,4 +508,46 @@ void SavePayDaySel() //Saves PayDay Selection to Appdata PrefFile
 	file.open(PrefFile, ios::out | ios::trunc);
 	file << PayDayCursel;
 	file.close();
+}
+
+void SaveBalance(int BalanceInt)
+{
+	wchar_t* AppDataFolderPath;
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
+
+	wstringstream PrefFileSS;
+	PrefFileSS << AppDataFolderPath << "\\TangLeft\\UBal.pref";
+	wstring PrefFile = { PrefFileSS.str() };
+
+	wstringstream PrefFilePathSS;
+	PrefFilePathSS << AppDataFolderPath << "\\TangLeft";
+	wstring PrefFilePathWstr = { PrefFilePathSS.str() };
+	const wchar_t* PrefFilePath = PrefFilePathWstr.c_str();
+	_wmkdir(PrefFilePath);
+
+	ofstream file;
+	file.open(PrefFile, ios::out | ios::trunc);
+	file << BalanceInt;
+	file.close();
+}
+
+void FillBalance()
+{
+	wchar_t* AppDataFolderPath;
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
+
+	wstringstream PrefFileSS;
+	PrefFileSS << AppDataFolderPath << "\\TangLeft\\UBal.pref";
+	wstring PrefFile = { PrefFileSS.str() };
+	int LastBal = 0;
+
+	ifstream file;
+	file.open(PrefFile, ios::in);
+	file >> LastBal;
+	file.close();
+
+	char buff[1024];
+	sprintf_s(buff, "%i", LastBal);
+
+	SendMessage(hBalance, EM_REPLACESEL, TRUE, (LPARAM)buff);
 }
