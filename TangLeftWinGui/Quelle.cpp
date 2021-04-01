@@ -1,6 +1,6 @@
 // this programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.3
-// author: andi@corradi.ch release Date: 30.March 2021
+// Version: 1.4
+// author: andi@corradi.ch release Date: 01.April 2021
 
 #include <windows.h>
 #include <WinUser.h>
@@ -10,12 +10,16 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <ShlObj_core.h>
+#include <direct.h>
+#include <stdlib.h>
 
 // TODO:
 // DONE save Window Position and remember on next start
 // - create an animated Splash Screen
 // DONE set Mainwindow size to non resizable
-// - Write Payday Selection to preference file and read every start
+// DONE Write Payday Selection to preference file and read every start
 // DONE - Error Handling: prevent calculate on empty Balance
 // - Set Window and Taskbar Icon
 // - Create MSI with Logos on Shortcuts
@@ -71,6 +75,7 @@ int CalcDaysToPayday(int);
 int CalculateDailyBudget(int, int);
 void SaveWindowPos(HWND);
 void SetWindowPosition(HWND);
+void SavePayDaySel();
 
 // declare Variable
 
@@ -201,6 +206,7 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	case WM_CLOSE:
 	case WM_DESTROY:
 		SaveWindowPos(hWnd);
+		SavePayDaySel();
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
@@ -312,7 +318,6 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		return (INT_PTR)CreateSolidBrush(RGB(255, 255, 255));
 
 		break;
-
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam); // default Windows Message handler
 }
@@ -378,6 +383,7 @@ int CalcDaysToPayday(int CurSelPayDay) // integer function with argument (intege
 }
 
 int FillPayDayBox(int AmmountDaysOfCurrentMonth, int DayOfMonth)  // Populates the Combobox "Payday" with the possible values of the current month (with leapyear detection)
+																  // form file: %AppData%\Tangleft\USel.pref
 {
 	for (int i = 1; i <= AmmountDaysOfCurrentMonth; i++)
 	{
@@ -387,7 +393,20 @@ int FillPayDayBox(int AmmountDaysOfCurrentMonth, int DayOfMonth)  // Populates t
 			
 	}
 
-	SendMessage(hPayDayBox, CB_SETCURSEL, (WPARAM) 23, 0);
+	wchar_t* AppDataFolderPath;
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
+
+	wstringstream PrefFileSS;
+	PrefFileSS << AppDataFolderPath << "\\TangLeft\\USel.pref";
+	wstring PrefFile = { PrefFileSS.str() };
+	int LastSel = 0;
+
+	ifstream file;
+	file.open(PrefFile, ios::in);
+	file >> LastSel;
+	file.close();
+
+	SendMessage(hPayDayBox, CB_SETCURSEL, (WPARAM) LastSel-1, 0);
 	SendMessage(hPayDayBox, CB_DELETESTRING, (WPARAM)DayOfMonth-1, 0);
 
 	return 0;
@@ -433,8 +452,8 @@ void SaveWindowPos(HWND hWnd)
 {
 	WINDOWPLACEMENT lpwndpl;
 	HKEY hkhandle;
-
 	lpwndpl.length = sizeof(lpwndpl);
+
 	GetWindowPlacement(hWnd, &lpwndpl);
 	RegCreateKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", &hkhandle);
 	RegSetValueExA(hkhandle, "LeftPos", 0, REG_DWORD, (const BYTE*)&lpwndpl.rcNormalPosition.left, sizeof(lpwndpl.rcNormalPosition.left));
@@ -462,4 +481,26 @@ void SetWindowPosition(HWND hWnd)
 	{
 		SetWindowPos(hWnd, HWND_TOP, 100, 100, 490, 400, 0);
 	}
+}
+
+void SavePayDaySel() //Saves PayDay Selection to Appdata PrefFile
+{
+	int PayDayCursel = GetPayDayCurSel();
+	wchar_t* AppDataFolderPath;
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &AppDataFolderPath);
+	
+	wstringstream PrefFileSS;
+	PrefFileSS << AppDataFolderPath << "\\TangLeft\\USel.pref";
+	wstring PrefFile = { PrefFileSS.str() };
+	
+	wstringstream PrefFilePathSS;
+	PrefFilePathSS << AppDataFolderPath << "\\TangLeft";
+	wstring PrefFilePathWstr = { PrefFilePathSS.str() };
+	const wchar_t* PrefFilePath = PrefFilePathWstr.c_str();
+	_wmkdir(PrefFilePath);
+	
+	ofstream file;
+	file.open(PrefFile, ios::out | ios::trunc);
+	file << PayDayCursel;
+	file.close();
 }
