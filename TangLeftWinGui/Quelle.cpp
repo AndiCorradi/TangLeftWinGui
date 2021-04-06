@@ -1,6 +1,6 @@
 // this programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.5
-// author: andi@corradi.ch release Date: 01.April 2021
+// Version: 1.7
+// author: andi@corradi.ch release Date: 06.April 2021
 
 #include <windows.h>
 #include <WinUser.h>
@@ -16,11 +16,11 @@
 #include <stdlib.h>
 
 // TODO:
-// DONE save Window Position and remember on next start
-// DONE Write Balance to a File and read on every start
-// - create an animated Splash Screen
-// DONE set Mainwindow size to non resizable
-// DONE Write Payday Selection to preference file and read every start
+// DONE - save Window Position and remember on next start
+// DONE - Write Balance to a File and read on every start
+// DONE - create an animated Splash Screen
+// DONE - set Mainwindow size to non resizable
+// DONE - Write Payday Selection to preference file and read every start
 // DONE - Error Handling: prevent calculate on empty Balance
 // - Set Window and Taskbar Icon
 // - Create MSI with Logos on Shortcuts
@@ -59,9 +59,15 @@ LPCSTR Six = "6";
 LPCSTR Seven = "7";
 LPCSTR Eight = "8";
 LPCSTR Nine = "9";
-HBITMAP hLogoImage, hTitleImage;
+HBITMAP hLogoImage, hTitleImage, hSplashOneImage, hSplashTwoImage, hSplashThreeImage, hSplashFourImage, hSplashFiveImage;
 HWND hLogo;
 HWND hTitle;
+HWND hSplashOne;
+HWND hSplashTwo;
+HWND hSplashThree;
+HWND hSplashFour;
+HWND hSplashFive;
+HWND Splash;
 
 // declare function prototypes
 
@@ -92,6 +98,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	loadImages();
 	HWND hWnd; // Name fürs Window Handle
+	HWND Splash = { 0 }; // Handle für den SplashScreen
 	HWND hButton;
 	WNDCLASS wc; // Struct/Klasse für die Fenster definieren
 	MSG msg; // Variable für das Eventhandling
@@ -117,14 +124,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW); // Cursor im Fenster
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); // Fensterhintergrund
 	wc.lpszMenuName = NULL;
-	wc.lpszClassName = "WINAPITest"; // Name für die erstellte Struktur(Klasse)
+	wc.lpszClassName = "TangLeft"; // Name für die erstellte Struktur(Klasse)
 	// wc = {}; initialisiert alle Parameter oben mit dem Standard NULL (Alternative zum Parameter ausfüllen).
 
 	// Struktur (WINAPITest) bei Windows registrieren:
 	assert(RegisterClass(&wc)); // Pointer auf die Window Klasse
 
 	//Fenster erstellen:
-	hWnd = CreateWindow("WINAPITest", "TangLeft 1.2", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 490, 400, 0, 0, hInstance, 0);
+	hWnd = CreateWindow("TangLeft", "TangLeft 1.7", WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 490, 400, 0, 0, hInstance, 0);
 	// Fenster Position wiederherstellen (auf Position beim letzten Programm schliessen)
 	SetWindowPosition(hWnd);
 	// Button erstellen:
@@ -168,15 +175,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hButton9 = CreateWindow("button", "9", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 85, 140, 20, 20, hWnd, (HMENU)IDC_BALANCE_BUTTON_9, hInstance, 0);
 	// Button C erstellen:
 	hButtonC = CreateWindow("button", "C", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 205, 115, 20, 20, hWnd, (HMENU)IDC_BALANCE_BUTTON_C, hInstance, 0);
+	// SplashScreen erstellen:
+	Splash = CreateWindow("TangLeft", "", 0, CW_USEDEFAULT, CW_USEDEFAULT, 510, 210, 0, 0, hInstance, 0);
 
 	// Debug MessageBox to show a Value
-	int CurSelPayday = GetPayDayCurSel();
-	char buff[1024];
-	sprintf_s(buff, "%d", CurSelPayday);
-	MessageBox(0, buff, "DebugBox", MB_OK);
+	//int CurSelPayday = GetPayDayCurSel();
+	//char buff[1024];
+	//sprintf_s(buff, "%d", CurSelPayday);
+	//MessageBox(0, buff, "DebugBox", MB_OK);
 
-	//Fenster aufrufen:
+	//Splashscreen aufrufen:
+	ShowWindow(Splash, nCmdShow);
+	hLogo = CreateWindow("Static", 0, WS_TABSTOP | WS_CHILD | WS_VISIBLE | SS_BITMAP, 0, 0, 490, 170, Splash, 0, 0, 0);
+	//Place Slashscreen in the middle of the Screen
+	RECT rc;
+	GetWindowRect(Splash, &rc);
+	int xPos = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+	int yPos = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+	SetWindowPos(Splash, HWND_TOP, xPos, yPos, 510, 210, 0);
+	// Splashscreen Bitmap aufrufen:
+	SendMessage(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hSplashOneImage);
+	Sleep(1000);
+	SendMessage(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hSplashTwoImage);
+	Sleep(200);
+	SendMessage(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hSplashThreeImage);
+	Sleep(200);
+	SendMessage(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hSplashFourImage);
+	Sleep(200);
+	SendMessage(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hSplashFiveImage);
+	Sleep(1000);
+	DestroyWindow(Splash);
+	// Hauptfenster aufrufen:
 	ShowWindow(hWnd, nCmdShow);
+	//DestroyWindow(Splash);
 	SetForegroundWindow(hWnd);
 	SetFocus(hWnd);
 	UpdateWindow(hWnd);
@@ -208,11 +239,13 @@ LRESULT CALLBACK MessageHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	switch (uMsg)
 	{
 	case WM_CLOSE:
-	case WM_DESTROY:
-		SaveWindowPos(hWnd);
-		SavePayDaySel();
-		SaveBalance(BalanceInt);
-		PostQuitMessage(0);
+	//case WM_DESTROY: not necessary ? does WM_DESTROY include WM_CLOSE ? if activated: ERROR: Destroys the whole application instead of Splashcreen
+
+			SaveWindowPos(hWnd);
+			SavePayDaySel();
+			SaveBalance(BalanceInt);
+			PostQuitMessage(0);
+		
 		break;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_CALCULATE_BUTTON)
@@ -451,6 +484,12 @@ void loadImages()
 {
 	hLogoImage = (HBITMAP)LoadImageW(NULL, L"LogoTangLeft.bmp", IMAGE_BITMAP, 222, 150, LR_LOADFROMFILE);
 	hTitleImage = (HBITMAP)LoadImageW(NULL, L"TangLeftTitle.bmp", IMAGE_BITMAP, 215, 47, LR_LOADFROMFILE);
+	hSplashOneImage = (HBITMAP)LoadImageW(NULL, L"TangLeftSplashOne.bmp", IMAGE_BITMAP, 490, 170, LR_LOADFROMFILE);
+	hSplashTwoImage = (HBITMAP)LoadImageW(NULL, L"TangLeftSplashTwo.bmp", IMAGE_BITMAP, 490, 170, LR_LOADFROMFILE);
+	hSplashThreeImage = (HBITMAP)LoadImageW(NULL, L"TangLeftSplashThree.bmp", IMAGE_BITMAP, 490, 170, LR_LOADFROMFILE);
+	hSplashFourImage = (HBITMAP)LoadImageW(NULL, L"TangLeftSplashFour.bmp", IMAGE_BITMAP, 490, 170, LR_LOADFROMFILE);
+	hSplashFiveImage = (HBITMAP)LoadImageW(NULL, L"TangLeftSplashFive.bmp", IMAGE_BITMAP, 490, 170, LR_LOADFROMFILE);
+
 }
 
 void SaveWindowPos(HWND hWnd)
