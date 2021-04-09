@@ -22,7 +22,8 @@
 // DONE - set Mainwindow size to non resizable
 // DONE - Write Payday Selection to preference file and read every start
 // DONE - Error Handling: prevent calculate on empty Balance
-// - Set Window and Taskbar Icon
+// - Cleanup Code and write comments
+// DONE - Set Window and Taskbar Icon
 // - Create MSI with Logos on Shortcuts
 
 using namespace std;
@@ -68,7 +69,8 @@ HWND hSplashThree;
 HWND hSplashFour;
 HWND hSplashFive;
 HWND Splash;
-
+HICON hIcon = static_cast<HICON>(::LoadImage(NULL, MAKEINTRESOURCE(""), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE | LR_LOADTRANSPARENT));
+//HICON hIcon = static_cast<HICON>(::LoadImage(NULL, MAKEINTRESOURCE(IDI_WARNING), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED | LR_DEFAULTSIZE));
 // declare function prototypes
 
 LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
@@ -113,14 +115,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hButton8;
 	HWND hButton9;
 	HWND hButtonC;
-
+	
 	// Struct erstellen:
 	wc.style = CS_HREDRAW | CS_VREDRAW; // ganzes Fenster neu zeichnen bei resize
 	wc.lpfnWndProc = MessageHandler; // Pointer auf Windows Procedure
 	wc.cbClsExtra = 0; // MSDN: The number of extra bytes to allocate following the window-class structure. The system initializes the bytes to zero.
 	wc.cbWndExtra = 0; // MSDN: The number of extra bytes to allocate following the window instance. The system initializes the bytes to zero. If an application uses WNDCLASSEX to register a dialog box created by using the CLASS directive in the resource file, it must set this member to DLGWINDOWEXTRA.
 	wc.hInstance = hInstance; // übergeben des Instanznamens (Muss gleich sein wie der Parameter Name bei der WinMain definition)
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	wc.hIcon = (HICON)LoadImage(NULL, "TangLeftIcon.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+	//wc.hIcon = wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	//wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW); // Cursor im Fenster
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); // Fensterhintergrund
 	wc.lpszMenuName = NULL;
