@@ -1,5 +1,5 @@
 // this programm calculates the daily budget left until next payday based on your balance and payday input.
-// Version: 1.7
+// Version: 1.8
 // author: andi@corradi.ch release Date: 06.April 2021
 
 #include <windows.h>
@@ -511,8 +511,8 @@ void SaveWindowPos(HWND hWnd)
 
 void SetWindowPosition(HWND hWnd)
 {
-	HKEY hkhandle;
-	DWORD DataSize;
+	HKEY hkhandle{ 0 };
+	DWORD DataSize{ 0 };
 	WINDOWPLACEMENT lpwndpl;
 	lpwndpl.length = sizeof(lpwndpl);
 
@@ -521,7 +521,7 @@ void SetWindowPosition(HWND hWnd)
 	RegGetValueA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", "TopPos", RRF_RT_ANY, 0, &lpwndpl.rcNormalPosition.top, &DataSize);
 	RegCloseKey(hkhandle);
 
-	if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", 0, KEY_QUERY_VALUE, &hkhandle) == ERROR_SUCCESS)
+	if (RegGetValueA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", "LeftPos", RRF_RT_ANY, 0, &lpwndpl.rcNormalPosition.left, &DataSize) == ERROR_SUCCESS & RegGetValueA(HKEY_CURRENT_USER, "SOFTWARE\\Tangleft", "TopPos", RRF_RT_ANY, 0, &lpwndpl.rcNormalPosition.top, &DataSize) == ERROR_SUCCESS)
 	{
 		SetWindowPos(hWnd, HWND_TOP, lpwndpl.rcNormalPosition.left, lpwndpl.rcNormalPosition.top, 490, 400, 0);
 	}
